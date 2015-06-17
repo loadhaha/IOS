@@ -1,0 +1,122 @@
+1> 什么是单例模式?(单个实例对象)
+ 
+   单例模式的意图是使类的对象称为系统中唯一的实例,提供一个访问点,提供一个访问点问供客户类共享资源
+ 
+    Person *p = [Person new];
+ 
+    在 Person 类中,[Person new] 的时候,会创建一个新的空间(一个对象),再 New 一次,又会创建另一个空间(有一个对象),但是在单例模式中,[Person new] 的时候,第一次会创建一个新的空间,以后不管是多个界面还是不同文件,只要是在同一个程序(一个系统)中, 再 new ,copy, alloc init ...的时候,不会再创建新的空间,创建的新的对象会指向第一次创建的对象的内存空间,以后 Person 类中的所有对象的属性都与第一次创建内存空间的对象的属性相同,即共有属性.(在任何时候使用Person的时候,只会使用同一个对象)
+    而且只要该程序没有退出,这个对象就一直不会被销毁即使是release和alloc.
+    
+    单例模式就是在任何时候,使用 Person 对象,使用的都是同一个对象,Person 的属性也是共享的.
+ 
+2> 什么情况下使用单例?
+ 
+    1.类只能有一个实例,而且必须从一个为人孰知的访问点对其访问,比如工厂方法.
+    2.这个唯一的实例只能通过子类化进行扩展,而且扩展的对象不会破坏客户端代码.
+
+3> 单例设置模式的要点:
+    
+    1.某个类只能有一个实例.
+    2.他必须自行创建这个对象.
+    3.必须自行向整个系统提供这个实例.
+    4.为了保证实例的唯一性,我们必须将以下的实现方法进行覆盖:
+    
+    - (id)copyWithZone:(NSZone *)zone;
+    + (id)allocWithZone:(NSZone *)zone;
+    - (id)retain;
+    - (NSUInteger)retainCount;
+    - (oneway void)release;
+    - (id)autorelease;
+    
+    5.这个方法必须是一个静态类.
+ 
+4> 在 OC 中实现单例模式:
+    
+    先创建一个单例类,即:
+ 
+ #import <Foundation/Foundation.h>
+ 
+ @interface Bee: NSObject <NSCopying> //注意此处调用了NSCopying协议
+ 
+ + (Bee *)shareInsrance: //此处定义了一个工厂方法,用工厂方法来限制实例化过程
+ 
+ @end  //调用NSCopying 协议,从而在实现文件中覆盖
+ 
+ share  共用    
+ instance  实例,例子
+ 
+ */
+ 
+ 
+Tools.h
+
+#import <Foundation/Foundation.h>
+
+@interface Tools : NSObject
+@property (nonatomic) int num;
+@property (nonatomic,copy) NSString *text;
+
+//定义工厂方法
++(instancetype)shareInstance;
+@end
+
+Tools.m
+
+#import "Tools.h"
+//私有的对象类型的变量
+static Tools *instance = nil;
+
+@implementation Tools
++(instancetype)shareInstance{
+    
+    //判断对象有没有被创建过
+    if(instance==nil){
+        //创建对象
+        instance = [[self alloc] init];
+        
+    }
+    
+    return instance;
+}
+
+//copy
+-(id)copyWithZone:(NSZone *)zone{
+    
+    return self;
+}
+//alloc
++(id)allocWithZone:(NSZone *)zone{
+    
+    //判断对象是否存在
+    //如果不存在，创建
+    //@synchronized 保证同一时间，只能干这一件事情
+    @synchronized(self) {
+        if(instance==nil){
+            instance = [super allocWithZone:zone];
+            return instance;
+            
+        }
+    }
+    //如果存在，直接return self;
+    return instance;  //只要 不等于nil,都是原来
+}
+-(id)retain{
+    
+    return self;
+    
+}
+-(NSUInteger)retainCount{
+    
+    return NSUIntegerMax;
+    
+}
+-(oneway void)release{
+    
+}
+
+-(id)autorelease{
+    
+    return self;
+}
+@end
+
